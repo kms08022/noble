@@ -24,9 +24,9 @@ public class NobleOrchestrator implements Orchestrator {
 	private volatile static NobleOrchestrator instance;
 	
 	private Map<String, CompositeEvent> compositeEventMap = new ConcurrentHashMap<String, CompositeEvent>();
-	Object biglock = new Object();
 	
 	private void createCompositeEventAndAddParent(Event event) {
+		// Synchronizing on the event
 		synchronized(event) {
 			String key = event.getId();
 			if (compositeEventMap.get(key)==null) {
@@ -38,10 +38,11 @@ public class NobleOrchestrator implements Orchestrator {
 	}
 	
 	private void addChild(String key, Event event) {
-		synchronized(biglock) {
-			CompositeEvent ce = compositeEventMap.get(key);
-			assert(ce!=null);
-			System.out.println("add child:  key = "+key+" child id = "+event.getId());
+		CompositeEvent ce = compositeEventMap.get(key);
+		assert(ce!=null);
+		System.out.println("add child:  key = "+key+" child id = "+event.getId());
+		// Synchronizing on the composite event
+		synchronized(ce) {
 			ce.addChild(event);
 			Event parent = ce.getParent();
 			int numChildren = ce.size();
@@ -49,6 +50,7 @@ public class NobleOrchestrator implements Orchestrator {
 			if (parent instanceof ShippingEvent && numChildren == 2) {
 				publisher.publish(ce);
 			}
+			
 			if (parent instanceof TradeEvent && numChildren == 5) {
 				publisher.publish(ce);
 			}
@@ -56,14 +58,12 @@ public class NobleOrchestrator implements Orchestrator {
 	}
 		
 	private String getCompositeEventKey(Event event) {
-		synchronized(biglock) {
 			String eventId = event.getId();
 			int idx = eventId.indexOf('-');
 			assert(idx>1);
 			//String key = idx==-1 ? eventId:eventId.substring(0,idx-1);
 			String key = eventId.substring(0,idx);
 			return key;
-		}
 	}
 	
 	private NobleOrchestrator() {}	
@@ -91,10 +91,12 @@ public class NobleOrchestrator implements Orchestrator {
 	public void receive(Event event) {
 
 		if (event.getId().indexOf('-')==-1) {
+			// the event is received from outside
 			createCompositeEventAndAddParent(event);
 		}
 		else 
 		{
+			// the event is received from one of the processors
 			String key = getCompositeEventKey(event);
 			assert(key!=null);
 			addChild(key, event);
