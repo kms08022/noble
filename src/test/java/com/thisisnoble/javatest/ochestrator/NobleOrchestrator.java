@@ -31,7 +31,7 @@ public class NobleOrchestrator implements Orchestrator {
 			String key = event.getId();
 			if (compositeEventMap.get(key)==null) {
 				CompositeEvent ce = new CompositeEvent(key, event);
-				System.out.println("add Parent: key = "+key);
+				System.out.println("add parent: key = "+key+" parent id = "+event.getId());
 				compositeEventMap.put(key, ce);
 			}
 		}
@@ -41,7 +41,7 @@ public class NobleOrchestrator implements Orchestrator {
 		synchronized(biglock) {
 			CompositeEvent ce = compositeEventMap.get(key);
 			assert(ce!=null);
-			System.out.println("add child: key = "+key+"child id = "+event.getId());
+			System.out.println("add child:  key = "+key+" child id = "+event.getId());
 			ce.addChild(event);
 			Event parent = ce.getParent();
 			int numChildren = ce.size();
