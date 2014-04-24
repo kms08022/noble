@@ -60,10 +60,10 @@ public class SimpleOrchestratorTest {
         assertEquals(2, ce.size());
         RiskEvent re2 = ce.getChildById("ship2-riskEvt");
         assertNotNull(re2);
-        assertEquals(50.0, re2.getRiskValue(), 0.01);
+        assertEquals(25.0, re2.getRiskValue(), 0.01);
         MarginEvent me2 = ce.getChildById("ship2-marginEvt");
         assertNotNull(me2);
-        assertEquals(10.0, me2.getMargin(), 0.01);
+        assertEquals(5.0, me2.getMargin(), 0.01);
     }
 
     private Orchestrator setupOrchestrator() {
