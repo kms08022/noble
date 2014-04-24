@@ -8,9 +8,8 @@ import com.thisisnoble.javatest.impl.CompositeEvent;
 
 public class TestPublisher implements Publisher {
 
-    private Object listLock = new Object();
-    
-    final List<CompositeEvent> list = Collections.synchronizedList(new ArrayList<CompositeEvent>());
+    private final Object listLock = new Object();
+    private final List<CompositeEvent> list = Collections.synchronizedList(new ArrayList<CompositeEvent>());
     
     @Override
     public void publish(Event event) {
@@ -20,7 +19,7 @@ public class TestPublisher implements Publisher {
     public Event getLastEvent() {
     	// We need to synchronize here to avoid the situation
     	// where there is only one element in the list and
-    	// multiple threads trying to remove that same element
+    	// multiple threads try to remove that same element
     	synchronized(listLock) {
     		CompositeEvent ce = null;
     		if (list.size()>0)
