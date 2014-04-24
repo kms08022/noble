@@ -7,7 +7,7 @@ import com.thisisnoble.javatest.Orchestrator;
 import com.thisisnoble.javatest.Processor;
 import com.thisisnoble.javatest.Publisher;
 
-// NobleOrchestrator singleton class
+// NobleOrchestrator thread-safe singleton class
 
 public class NobleOrchestrator implements Orchestrator {
 	// Note:
@@ -40,9 +40,12 @@ public class NobleOrchestrator implements Orchestrator {
 	public void receive(Event event) {
 		publisher.publish(event);
 		for (Processor p: processors) {
-			if (p.interestedIn(event)) 
+			if (p.interestedIn(event)) {
 				p.process(event);
+				return;
+			}
 		}
+		
 	}
 
 	@Override
