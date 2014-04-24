@@ -1,6 +1,7 @@
 package com.thisisnoble.javatest;
 
 import com.thisisnoble.javatest.events.MarginEvent;
+
 import com.thisisnoble.javatest.events.RiskEvent;
 import com.thisisnoble.javatest.events.ShippingEvent;
 import com.thisisnoble.javatest.events.TradeEvent;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import static com.thisisnoble.javatest.util.TestIdGenerator.tradeEventId;
 import static org.junit.Assert.*;
+import com.thisisnoble.javatest.ochestrator.NobleOrchestrator;
 
 public class SimpleOrchestratorTest {
 
@@ -81,7 +83,6 @@ public class SimpleOrchestratorTest {
     }
 
     private Orchestrator createOrchestrator() {
-        //TODO solve the test
-        throw new UnsupportedOperationException();
+    	return NobleOrchestrator.getInstance();
     }
 }
