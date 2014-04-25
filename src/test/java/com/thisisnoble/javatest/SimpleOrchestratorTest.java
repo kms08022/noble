@@ -68,12 +68,12 @@ public class SimpleOrchestratorTest {
         System.out.println("shippingEventShouldTriggerOnly2Processors passed !");
     }
     
-    // Test handling of one thousand trade events sent by one thread
+    // Test handling of ten thousand trade events sent by one thread
     // Expected result:
-    // One thousand composite events each of which 
+    // Ten thousand composite events each of which 
     // has one unique parent and five unique children
     @Test
-    public void OneThousandTradeEvents() {
+    public void TenThousandTradeEvents() {
         TestPublisher testPublisher = new TestPublisher();
         Orchestrator orchestrator = setupOrchestrator();
         orchestrator.setup(testPublisher);
@@ -82,13 +82,23 @@ public class SimpleOrchestratorTest {
         
         String prefix = "trade";
         
-        int numEvents = 1000;
+        int numEvents = 10000;
         for (int i = 0; i<numEvents; i++) {
         	TradeEvent se = new TradeEvent(prefix+Integer.toString(i), i);
         	orchestrator.receive(se);
         }
         
-        safeSleep(2000);
+        int size = testPublisher.getSize();
+        int totalSleep = 0;
+        while (size!=numEvents) {
+        	safeSleep(500);
+        	totalSleep = totalSleep + 500;
+        	// Abort if we have slept more than five minutes
+        	if (totalSleep>5000*60)
+        		assertTrue(false);
+        	size = testPublisher.getSize();
+        }
+        
         assertTrue(testPublisher.getSize()==numEvents);
         for (int i = 0; i<numEvents; i++) {
         	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
@@ -102,15 +112,15 @@ public class SimpleOrchestratorTest {
         	assertTrue(ce.getChildById(key+"-shipEvt-marginEvt")!=null);
         }     
         assertTrue(testPublisher.getSize()==0);
-        System.out.println("OneThousandTradeEvents passed !");
+        System.out.println("TenThousandTradeEvents passed !");
     }
     
-    // Test handling of one thousand shipping events sent by one thread
+    // Test handling of ten thousand shipping events sent by one thread
     // Expected result:
-    // One thousand composite events each of which 
+    // Ten thousand composite events each of which 
     // has one unique parent and two unique children
     @Test
-    public void OneThousandShippingEvents() {
+    public void TenThousandShippingEvents() {
         TestPublisher testPublisher = new TestPublisher();
         Orchestrator orchestrator = setupOrchestrator();
 
@@ -120,13 +130,23 @@ public class SimpleOrchestratorTest {
         
         String prefix = "ship";
         
-        int numEvents = 1000;
+        int numEvents = 10000;
         for (int i = 0; i<numEvents; i++) {
         	ShippingEvent se = new ShippingEvent(prefix+Integer.toString(i), i);
         	orchestrator.receive(se);
         }
         
-        safeSleep(2000);
+        int size = testPublisher.getSize();
+        int totalSleep = 0;
+        while (size!=numEvents) {
+        	safeSleep(500);
+        	totalSleep = totalSleep + 500;
+        	// Abort if we have slept more than five minutes
+        	if (totalSleep>5000*60)
+        		assertTrue(false);
+        	size = testPublisher.getSize();
+        }
+        
         assertTrue(testPublisher.getSize()==numEvents);
         for (int i = 0; i<numEvents; i++) {
         	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
@@ -137,10 +157,8 @@ public class SimpleOrchestratorTest {
         	assertTrue(ce.getChildById(key+"-marginEvt")!=null);
         }
         assertTrue(testPublisher.getSize()==0);
-        System.out.println("OneThousandShippingEvents passed !");
+        System.out.println("TenThousandShippingEvents passed !");
     }
-    
-
     
     private Orchestrator setupOrchestrator() {
         Orchestrator orchestrator = createOrchestrator();
