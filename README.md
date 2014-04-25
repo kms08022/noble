@@ -25,4 +25,6 @@ Noble Group Programming Test (design and implemention)
    tenThousandTradeEvents()
    fortyThousandEventsInjectedByFourThreads()
 
-6. To run the test, do mvn test
+7. The full tarball can be downloaded at:
+   https://github.com/chicheongweng/noble
+   To run the test, do mvn test
