@@ -1,7 +1,6 @@
 package com.thisisnoble.javatest;
 
 import com.thisisnoble.javatest.events.MarginEvent;
-
 import com.thisisnoble.javatest.events.RiskEvent;
 import com.thisisnoble.javatest.events.ShippingEvent;
 import com.thisisnoble.javatest.events.TradeEvent;
@@ -9,10 +8,12 @@ import com.thisisnoble.javatest.impl.CompositeEvent;
 import com.thisisnoble.javatest.processors.MarginProcessor;
 import com.thisisnoble.javatest.processors.RiskProcessor;
 import com.thisisnoble.javatest.processors.ShippingProcessor;
+
 import org.junit.Test;
 
 import static com.thisisnoble.javatest.util.TestIdGenerator.tradeEventId;
 import static org.junit.Assert.*;
+
 import com.thisisnoble.javatest.ochestrator.NobleOrchestrator;
 
 public class SimpleOrchestratorTest {
@@ -84,8 +85,8 @@ public class SimpleOrchestratorTest {
         
         int numEvents = 10000;
         for (int i = 0; i<numEvents; i++) {
-        	TradeEvent se = new TradeEvent(prefix+Integer.toString(i), i);
-        	orchestrator.receive(se);
+        	TradeEvent te = new TradeEvent(prefix+Integer.toString(i), i);
+        	orchestrator.receive(te);
         }
         
         int size = testPublisher.getSize();
@@ -93,7 +94,7 @@ public class SimpleOrchestratorTest {
         while (size!=numEvents) {
         	safeSleep(500);
         	totalSleep = totalSleep + 500;
-        	// Abort if we have slept more than five minutes
+        	// Abort if we have slept more than sixty seconds
         	if (totalSleep>5000*60)
         		assertTrue(false);
         	size = testPublisher.getSize();
@@ -141,7 +142,7 @@ public class SimpleOrchestratorTest {
         while (size!=numEvents) {
         	safeSleep(500);
         	totalSleep = totalSleep + 500;
-        	// Abort if we have slept more than five minutes
+        	// Abort if we have slept more than sixty seconds
         	if (totalSleep>5000*60)
         		assertTrue(false);
         	size = testPublisher.getSize();
@@ -158,6 +159,108 @@ public class SimpleOrchestratorTest {
         }
         assertTrue(testPublisher.getSize()==0);
         System.out.println("TenThousandShippingEvents passed !");
+    }
+
+    private Runnable createShippingEvent(final Orchestrator orchestrator, final String prefix, final int size){
+    	
+        Runnable aRunnable = new Runnable(){
+            public void run(){                
+                for (int i = 0; i<size; i++) {
+                	ShippingEvent se = new ShippingEvent(prefix+Integer.toString(i), i);
+                	orchestrator.receive(se);
+                }
+            }
+        };
+        return aRunnable;
+    }
+    
+    private Runnable createTradeEvent(final Orchestrator orchestrator, final String prefix, final int size){
+
+        Runnable aRunnable = new Runnable(){
+            public void run(){
+                for (int i = 0; i<size; i++) {
+                	TradeEvent te = new TradeEvent(prefix+Integer.toString(i), i);
+                	orchestrator.receive(te);
+                }
+            }
+        };
+        return aRunnable;
+    }
+    
+	private String getKey(Event event) {
+		String eventId = event.getId();
+		int idx = eventId.indexOf('-');
+		assert(idx>1);
+		//String key = idx==-1 ? eventId:eventId.substring(0,idx-1);
+		String key = eventId.substring(0,idx);
+		return key;
+	}
+	
+    // Test handling of 20K shipping events and 20K trade events injected
+    // by four different threads
+    // Expected result:
+    // Forty thousand composite events
+    // Each composite event of a ShipEvent parent has two unique children
+    // Each composite event of a TradeEven parent has five unique children
+    @Test
+    public void FortyThousandEventsInjectedByFourThreads() {
+        TestPublisher testPublisher = new TestPublisher();
+        Orchestrator orchestrator = setupOrchestrator();
+
+        orchestrator.setup(testPublisher);
+        assertTrue(testPublisher.getSize()==0);
+        assertTrue(orchestrator.getNumOfProcessors()==3);
+        
+        int numEvents = 10000;
+        int numThreads = 4;
+        
+        Thread t1 = new Thread(createShippingEvent(orchestrator, "set1", numEvents));
+        Thread t2 = new Thread(createShippingEvent(orchestrator, "set2", numEvents));        
+        Thread t3 = new Thread(createTradeEvent(orchestrator, "tet3", numEvents));
+        Thread t4 = new Thread(createTradeEvent(orchestrator, "tet4", numEvents));           
+        
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        
+        int size = testPublisher.getSize();
+        int totalSleep = 0;
+        int numCompositeEvents = numThreads*numEvents;
+        
+        while (size!=numCompositeEvents) {
+        	safeSleep(500);
+        	totalSleep = totalSleep + 500;
+        	// Abort if we have slept more than sixty seconds
+        	if (totalSleep>5000*60)
+        		assertTrue(false);
+        	size = testPublisher.getSize();
+        }
+   
+        assertTrue(testPublisher.getSize()==numCompositeEvents);
+                
+        for (int i = 0; i<numCompositeEvents; i++) {
+        	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
+        	String key = ce.getParent().getId();
+        	if (key.startsWith("set1")||key.startsWith("set2")) {
+	        	assertTrue(ce.getParent().getId().equals(key));
+	        	assertTrue(ce.size()==2);
+	        	assertTrue(ce.getChildById(key+"-riskEvt")!=null);
+	        	assertTrue(ce.getChildById(key+"-marginEvt")!=null);
+        	}
+        	if (key.startsWith("tet3")||key.startsWith("tet4")) {
+	        	assertTrue(ce.getParent().getId().equals(key));
+	        	assertTrue(ce.size()==5);
+	        	assertTrue(ce.getChildById(key+"-riskEvt")!=null);
+	        	assertTrue(ce.getChildById(key+"-marginEvt")!=null);
+	        	assertTrue(ce.getChildById(key+"-shipEvt")!=null);
+	        	assertTrue(ce.getChildById(key+"-shipEvt-riskEvt")!=null);
+	        	assertTrue(ce.getChildById(key+"-shipEvt-marginEvt")!=null);
+        	}
+        }
+    
+        assertTrue(testPublisher.getSize()==0);
+        System.out.println("FortyThousandEventsInjectedByFourThreads passed !");
     }
     
     private Orchestrator setupOrchestrator() {
