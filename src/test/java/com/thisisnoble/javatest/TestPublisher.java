@@ -8,12 +8,17 @@ import com.thisisnoble.javatest.impl.CompositeEvent;
 
 public class TestPublisher implements Publisher {
 
-    private final Object listLock = new Object();
-    private final List<CompositeEvent> list = Collections.synchronizedList(new ArrayList<CompositeEvent>());
+    private Object listLock;
+    private List<CompositeEvent> list;
+    
+    public TestPublisher() {
+        listLock = new Object();
+        list = Collections.synchronizedList(new ArrayList<CompositeEvent>());
+    }
     
     @Override
     public void publish(Event event) {
-        list.add((CompositeEvent)event);
+    	list.add((CompositeEvent)event);
     }
 
     public Event getLastEvent() {
@@ -24,7 +29,13 @@ public class TestPublisher implements Publisher {
     		CompositeEvent ce = null;
     		if (list.size()>0)
     			ce = list.remove(0);
+    		else
+    			System.out.println("publisher queue empty!");
     		return ce;
     	}
+    }
+    
+    public int getSize() {
+    	return list.size();
     }
 }

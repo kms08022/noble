@@ -22,7 +22,8 @@ public class NobleOrchestrator implements Orchestrator {
 	// The volatile keyword now ensures that multiple threads running 
 	// on different cores handle the singleton instance correctly. 
 	private volatile static NobleOrchestrator instance;
-	
+	private LinkedList<Processor> processors = new LinkedList<Processor>();
+	private Publisher publisher = null;
 	private Map<String, CompositeEvent> compositeEventMap = new ConcurrentHashMap<String, CompositeEvent>();
 	
 	private void createCompositeEventAndAddParent(Event event) {
@@ -31,7 +32,6 @@ public class NobleOrchestrator implements Orchestrator {
 			String key = event.getId();
 			if (compositeEventMap.get(key)==null) {
 				CompositeEvent ce = new CompositeEvent(key, event);
-				System.out.println("add parent: key = "+key+" parent id = "+event.getId());
 				compositeEventMap.put(key, ce);
 			}
 		}
@@ -40,7 +40,6 @@ public class NobleOrchestrator implements Orchestrator {
 	private void addChild(String key, Event event) {
 		CompositeEvent ce = compositeEventMap.get(key);
 		assert(ce!=null);
-		System.out.println("add child:  key = "+key+" child id = "+event.getId());
 		// Synchronizing on the composite event
 		synchronized(ce) {
 			ce.addChild(event);
@@ -66,7 +65,8 @@ public class NobleOrchestrator implements Orchestrator {
 			return key;
 	}
 	
-	private NobleOrchestrator() {}	
+	private NobleOrchestrator() {}
+	
 	public static NobleOrchestrator getInstance() {
 		// Double-checked locking to ensure only one NobleOchestrator instance is created
 		if (instance == null) {
@@ -78,9 +78,6 @@ public class NobleOrchestrator implements Orchestrator {
 		}
 		return instance;
 	}
-	
-	private LinkedList<Processor> processors = new LinkedList<Processor>();
-	private Publisher publisher = null;
 	
 	@Override
 	public void register(Processor processor) {
@@ -112,5 +109,20 @@ public class NobleOrchestrator implements Orchestrator {
 	@Override
 	public void setup(Publisher publisher) {
 		this.publisher = publisher;
+	}
+	
+	public void deleteAllProcessors() {
+		if (processors!=null)
+			processors.clear();
+	}
+
+	public void clearCompositeEventMap() {
+		if (compositeEventMap!=null)
+			compositeEventMap.clear();
+	}
+	
+	@Override
+	public int getNumOfProcessors() {
+		return (processors.size());
 	}
 }

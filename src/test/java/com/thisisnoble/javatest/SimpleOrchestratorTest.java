@@ -17,7 +17,7 @@ import com.thisisnoble.javatest.ochestrator.NobleOrchestrator;
 
 public class SimpleOrchestratorTest {
 
-    @Test
+	@Test
     public void tradeEventShouldTriggerAllProcessors() {
         TestPublisher testPublisher = new TestPublisher();
         Orchestrator orchestrator = setupOrchestrator();
@@ -44,6 +44,7 @@ public class SimpleOrchestratorTest {
         MarginEvent me2 = ce.getChildById("tradeEvt-shipEvt-marginEvt");
         assertNotNull(me2);
         assertEquals(2.0, me2.getMargin(), 0.01);
+        System.out.println("tradeEventShouldTriggerAllProcessors passed !");
     }
 
     @Test
@@ -64,10 +65,87 @@ public class SimpleOrchestratorTest {
         MarginEvent me2 = ce.getChildById("ship2-marginEvt");
         assertNotNull(me2);
         assertEquals(5.0, me2.getMargin(), 0.01);
+        System.out.println("shippingEventShouldTriggerOnly2Processors passed !");
     }
+    
+    // Test handling of one thousand trade events sent by one thread
+    // Expected result:
+    // One thousand composite events each of which 
+    // has one unique parent and five unique children
+    @Test
+    public void OneThousandTradeEvents() {
+        TestPublisher testPublisher = new TestPublisher();
+        Orchestrator orchestrator = setupOrchestrator();
+        orchestrator.setup(testPublisher);
+        assertTrue(testPublisher.getSize()==0);
+        assertTrue(orchestrator.getNumOfProcessors()==3);
+        
+        String prefix = "trade";
+        
+        int numEvents = 1000;
+        for (int i = 0; i<numEvents; i++) {
+        	TradeEvent se = new TradeEvent(prefix+Integer.toString(i), i);
+        	orchestrator.receive(se);
+        }
+        
+        safeSleep(2000);
+        assertTrue(testPublisher.getSize()==numEvents);
+        for (int i = 0; i<numEvents; i++) {
+        	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
+        	String key = prefix+Integer.toString(i);
+        	assertTrue(ce.getParent().getId().equals(key));
+        	assertTrue(ce.size()==5);
+        	assertTrue(ce.getChildById(key+"-riskEvt")!=null);
+        	assertTrue(ce.getChildById(key+"-marginEvt")!=null);
+        	assertTrue(ce.getChildById(key+"-shipEvt")!=null);
+        	assertTrue(ce.getChildById(key+"-shipEvt-riskEvt")!=null);
+        	assertTrue(ce.getChildById(key+"-shipEvt-marginEvt")!=null);
+        }     
+        assertTrue(testPublisher.getSize()==0);
+        System.out.println("OneThousandTradeEvents passed !");
+    }
+    
+    // Test handling of one thousand shipping events sent by one thread
+    // Expected result:
+    // One thousand composite events each of which 
+    // has one unique parent and two unique children
+    @Test
+    public void OneThousandShippingEvents() {
+        TestPublisher testPublisher = new TestPublisher();
+        Orchestrator orchestrator = setupOrchestrator();
 
+        orchestrator.setup(testPublisher);
+        assertTrue(testPublisher.getSize()==0);
+        assertTrue(orchestrator.getNumOfProcessors()==3);
+        
+        String prefix = "ship";
+        
+        int numEvents = 1000;
+        for (int i = 0; i<numEvents; i++) {
+        	ShippingEvent se = new ShippingEvent(prefix+Integer.toString(i), i);
+        	orchestrator.receive(se);
+        }
+        
+        safeSleep(2000);
+        assertTrue(testPublisher.getSize()==numEvents);
+        for (int i = 0; i<numEvents; i++) {
+        	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
+        	String key = prefix+Integer.toString(i);
+        	assertTrue(ce.getParent().getId().equals(key));
+        	assertTrue(ce.size()==2);
+        	assertTrue(ce.getChildById(key+"-riskEvt")!=null);
+        	assertTrue(ce.getChildById(key+"-marginEvt")!=null);
+        }
+        assertTrue(testPublisher.getSize()==0);
+        System.out.println("OneThousandShippingEvents passed !");
+    }
+    
+
+    
     private Orchestrator setupOrchestrator() {
         Orchestrator orchestrator = createOrchestrator();
+        ((NobleOrchestrator)orchestrator).deleteAllProcessors();
+        ((NobleOrchestrator)orchestrator).clearCompositeEventMap();
         orchestrator.register(new RiskProcessor(orchestrator));
         orchestrator.register(new MarginProcessor(orchestrator));
         orchestrator.register(new ShippingProcessor(orchestrator));
