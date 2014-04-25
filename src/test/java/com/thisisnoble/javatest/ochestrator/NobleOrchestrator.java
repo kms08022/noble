@@ -123,6 +123,6 @@ public class NobleOrchestrator implements Orchestrator {
 	
 	@Override
 	public int getNumOfProcessors() {
-		return (processors.size());
+		return processors.size();
 	}
 }
