@@ -186,16 +186,7 @@ public class SimpleOrchestratorTest {
         };
         return aRunnable;
     }
-    
-	private String getKey(Event event) {
-		String eventId = event.getId();
-		int idx = eventId.indexOf('-');
-		assert(idx>1);
-		//String key = idx==-1 ? eventId:eventId.substring(0,idx-1);
-		String key = eventId.substring(0,idx);
-		return key;
-	}
-	
+
     // Test handling of 20K shipping events and 20K trade events injected
     // by four different threads
     // Expected result:
@@ -203,7 +194,7 @@ public class SimpleOrchestratorTest {
     // Each composite event of a ShipEvent parent has two unique children
     // Each composite event of a TradeEven parent has five unique children
     @Test
-    public void FortyThousandEventsInjectedByFourThreads() {
+    public void fortyThousandEventsInjectedByFourThreads() {
         TestPublisher testPublisher = new TestPublisher();
         Orchestrator orchestrator = setupOrchestrator();
 
@@ -239,6 +230,7 @@ public class SimpleOrchestratorTest {
    
         assertTrue(testPublisher.getSize()==numCompositeEvents);
                 
+        // Verify all the parents and children
         for (int i = 0; i<numCompositeEvents; i++) {
         	CompositeEvent ce = (CompositeEvent) testPublisher.getLastEvent();
         	String key = ce.getParent().getId();
