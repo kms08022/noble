@@ -56,7 +56,7 @@ public class NobleOrchestrator implements Orchestrator {
 		}
 	}
 		
-	private String getCompositeEventKey(Event event) {
+	private String getKey(Event event) {
 			String eventId = event.getId();
 			int idx = eventId.indexOf('-');
 			assert(idx>1);
@@ -94,7 +94,7 @@ public class NobleOrchestrator implements Orchestrator {
 		else 
 		{
 			// the event is received from one of the processors
-			String key = getCompositeEventKey(event);
+			String key = getKey(event);
 			assert(key!=null);
 			addChild(key, event);
 		}
