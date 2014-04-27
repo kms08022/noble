@@ -95,7 +95,7 @@ public class SimpleOrchestratorTest {
         	safeSleep(500);
         	totalSleep = totalSleep + 500;
         	// Abort if we have slept more than sixty seconds
-        	if (totalSleep>5000*60)
+        	if (totalSleep>1000*60)
         		assertTrue(false);
         	size = testPublisher.getSize();
         }
@@ -143,7 +143,7 @@ public class SimpleOrchestratorTest {
         	safeSleep(500);
         	totalSleep = totalSleep + 500;
         	// Abort if we have slept more than sixty seconds
-        	if (totalSleep>5000*60)
+        	if (totalSleep>1000*60)
         		assertTrue(false);
         	size = testPublisher.getSize();
         }
@@ -223,7 +223,7 @@ public class SimpleOrchestratorTest {
         	safeSleep(500);
         	totalSleep = totalSleep + 500;
         	// Abort if we have slept more than sixty seconds
-        	if (totalSleep>5000*60)
+        	if (totalSleep>1000*60)
         		assertTrue(false);
         	size = testPublisher.getSize();
         }
