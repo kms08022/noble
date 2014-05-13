@@ -22,7 +22,9 @@ Noble Group Programming Test (design and implemention)
 6. I added three new JUnit test cases:
 
    tenThousandShippingEvents()
+   
    tenThousandTradeEvents()
+   
    fortyThousandEventsInjectedByFourThreads()
 
 7. The full tarball can be downloaded at:
